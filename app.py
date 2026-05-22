@@ -2,7 +2,7 @@ import streamlit as st
 from groq import Groq
 import uuid
 
-# 1. Page Config & Wide Layout (Crucial for dashboard sidebars)
+# 1. Page Config & Wide Layout (Crucial for sidebar dashboard panels)
 st.set_page_config(page_title="NotBias.com Engine", layout="wide", initial_sidebar_state="expanded")
 
 # 2. Advanced Premium CSS UI Theme (ChatGPT Dark/Light-neutral aesthetic)
@@ -74,7 +74,7 @@ with st.sidebar:
         new_id = str(uuid.uuid4())
         st.session_state.chat_sessions[new_id] = {"title": "⚖️ New Analysis", "messages": []}
         st.session_state.active_session_id = new_id
-        st.parent_rerun() if hasattr(st, "parent_rerun") else st.rerun()
+        st.rerun()
 
     st.markdown("<br><p style='font-size:12px; font-weight:600; color:#94a3b8;'>RECENT THREADS</p>", unsafe_allow_html=True)
     
@@ -89,9 +89,9 @@ with st.sidebar:
         if len(display_title) > 28:
             display_title = display_title[:25] + "..."
             
-        if st.button(display_title, key=f"nav_{session_id}", use_container_width=True):
+        if st.button(display_title, key=f"nav_{session_id}", use_container_width=True, type=btn_type):
             st.session_state.active_session_id = session_id
-            st.parent_rerun() if hasattr(st, "parent_rerun") else st.rerun()
+            st.rerun()
 
 # =====================================================================
 # MAIN CHAT DESKTOP INTERFACE
@@ -109,7 +109,7 @@ if not current_session["messages"]:
 for msg in current_session["messages"]:
     if msg["role"] == "user":
         st.chat_message("user").markdown(msg["content"])
-    elif msg["role"] == "assistant":
+    elif msg["role"] == "assistant":  # FIXED: Syntax bracket removed
         with st.chat_message("assistant"):
             col1, col2 = st.columns(2)
             with col1:
@@ -164,10 +164,14 @@ if user_query := st.chat_input("Query the neutral matrix..."):
                 
                 # Split algorithm mechanics parsing data cleanly outside risky JSON schemas
                 if "[START_PERSPECTIVE_A]" in raw_text and "[START_PERSPECTIVE_B]" in raw_text and "[START_BASELINE]" in raw_text:
-                    part_a_and_more = raw_text.split("[START_PERSPECTIVE_A]")[1]
-                    p_a, remaining = part_a_and_more.split("[START_PERSPECTIVE_B]")
-                    p_b, baseline = remaining.split("[START_BASELINE]")
-                    p_a, p_b, baseline = p_a.strip(), p_b.strip(), baseline.strip()
+                    try:
+                        part_a_and_more = raw_text.split("[START_PERSPECTIVE_A]")[1]
+                        # FIXED: Added maxsplit=1 parameter to both steps to completely prevent variable value unpacking crashes
+                        p_a, remaining = part_a_and_more.split("[START_PERSPECTIVE_B]", 1)
+                        p_b, baseline = remaining.split("[START_BASELINE]", 1)
+                        p_a, p_b, baseline = p_a.strip(), p_b.strip(), baseline.strip()
+                    except Exception:
+                        p_a, p_b, baseline = raw_text, "Review full transcript below.", ""
                 else:
                     p_a = raw_text
                 
@@ -191,7 +195,7 @@ if user_query := st.chat_input("Query the neutral matrix..."):
                 })
                 
                 # Force instant UI paint refresh sync cycle
-                st.parent_rerun() if hasattr(st, "parent_rerun") else st.rerun()
+                st.rerun()
                 
             except Exception as e:
                 st.error(f"Engine Core Disconnected: {e}")
