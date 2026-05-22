@@ -61,35 +61,44 @@ for msg in st.session_state.messages:
         st.markdown('<div class="label">Final Verdict</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="ui-card card-verdict">{msg["verdict"]}</div>', unsafe_allow_html=True)
 
-# --- 6. INPUT LOGIC ---
+# 6. Process Input
 if user_query := st.chat_input("Ask a hard question..."):
     with st.chat_message("user"):
         st.markdown(user_query)
     
     with st.chat_message("assistant"):
-        with st.spinner("Analyzing..."):
+        with st.spinner("Refining neutrality..."):
+            client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+            completion = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[
+                    {"role": "system", "content": "You are a neutral analyst. Provide your response using EXACTLY these headers: [START_PERSPECTIVE_A], [START_PERSPECTIVE_B], [START_VERDICT]. Do not include conversational filler before the first tag."},
+                    {"role": "user", "content": user_query}
+                ]
+            )
+            raw = completion.choices[0].message.content
+            
+            # ROBUST PARSING LOGIC
+            # We look for the tags, but if they aren't found, we just show the raw text
+            # instead of crashing the app.
+            data = {"user_q": user_query, "p_a": "...", "p_b": "...", "verdict": "..."}
+            
             try:
-                client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-                completion = client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=[
-                        {"role": "system", "content": "Split response into [START_PERSPECTIVE_A], [START_PERSPECTIVE_B], [START_VERDICT]. Be neutral, steel-man all arguments."},
-                        {"role": "user", "content": user_query}
-                    ]
-                )
-                raw = completion.choices[0].message.content
-                
-                # Basic Parser
-                data = {"user_q": user_query, "p_a": "...", "p_b": "...", "verdict": "..."}
-                try:
-                    s = raw.split("[START_PERSPECTIVE_A]")[1].split("[START_PERSPECTIVE_B]")
-                    data["p_a"] = s[0]
-                    s2 = s[1].split("[START_VERDICT]")
-                    data["p_b"] = s2[0]
-                    data["verdict"] = s2[1]
-                except: data["p_a"] = raw
-                
-                st.session_state.messages.append(data)
-                st.rerun()
+                # Use split with a fallback
+                if "[START_PERSPECTIVE_A]" in raw and "[START_PERSPECTIVE_B]" in raw and "[START_VERDICT]" in raw:
+                    parts = raw.split("[START_PERSPECTIVE_A]")[1].split("[START_PERSPECTIVE_B]")
+                    data["p_a"] = parts[0].strip()
+                    
+                    parts2 = parts[1].split("[START_VERDICT]")
+                    data["p_b"] = parts2[0].strip()
+                    data["verdict"] = parts2[1].strip()
+                else:
+                    # If tags are missing, just display the raw text in the first section
+                    data["p_a"] = raw
+                    data["p_b"] = "No secondary perspective found."
+                    data["verdict"] = "Please refine the query."
             except Exception as e:
-                st.error(f"Error: {e}")
+                data["p_a"] = f"Parsing Error: {str(e)} \n\n Raw Output: {raw}"
+            
+            st.session_state.messages.append(data)
+            st.rerun()
