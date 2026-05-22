@@ -1,21 +1,17 @@
 import streamlit as st
-import json
 from groq import Groq
 
 # 1. Expand layout and set page config
 st.set_page_config(page_title="NotBias.com", layout="wide")
 
-# 2. Inject Premium Custom CSS UI Theme
+# Inject Premium Custom CSS UI Theme
 st.markdown("""
 <style>
-    /* Global Font & Spacing tweaks */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     html, body, [data-testid="stMarkdownContainer"] {
         font-family: 'Inter', sans-serif;
         line-height: 1.6;
     }
-    
-    /* Custom CSS Card Component Design */
     .ui-card {
         background-color: #ffffff;
         padding: 24px;
@@ -24,23 +20,19 @@ st.markdown("""
         border: 1px solid #eef1f6;
         margin-bottom: 20px;
     }
-    .card-left { border-top: 4px solid #10b981; }  /* Green accent */
-    .card-right { border-top: 4px solid #3b82f6; } /* Blue accent */
-    .card-data { border-left: 4px solid #6b7280; background-color: #f8fafc; } /* Gray baseline */
+    .card-left { border-top: 4px solid #10b981; }  
+    .card-right { border-top: 4px solid #3b82f6; } 
+    .card-data { border-left: 4px solid #6b7280; background-color: #f8fafc; } 
     
     .card-header {
         font-size: 18px;
         font-weight: 700;
         color: #1e293b;
         margin-bottom: 14px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# App branding layout
 st.title("⚖️ NotBias.com")
 st.caption("Engineered machine neutrality through multi-perspective isolation.")
 
@@ -54,66 +46,73 @@ except Exception as e:
 if user_query := st.chat_input("Enter a heavily debated or controversial topic..."):
     st.chat_message("user").markdown(user_query)
     
-    # Updated constitution that strictly outlaws dense text walls
-    json_constitution = (
-        "You are a neutral backend data processor for NotBias.com. "
-        "Analyze the user's prompt and output a valid JSON object with exactly three keys: "
-        "'left_perspective', 'right_perspective', and 'statistical_baseline'.\n\n"
-        
-        "CRITICAL VISUAL FORMATTING RULES:\n"
-        "1. NEVER write heavy paragraphs or multi-sentence blocks of text.\n"
-        "2. Break all information down into short, highly scannable micro-bullet points (max 12 words per bullet).\n"
-        "3. Every single bullet point MUST start with a **Bold Key Phrase** action-anchor followed by a short explanation.\n"
-        "4. Use a clean line break between bullet points to ensure high breathing room.\n\n"
-        
-        "- 'left_perspective': Highly polished, steel-manned arguments from the progressive/interventionist angle structured as short bolded bullets.\n"
-        "- 'right_perspective': Highly polished, steel-manned arguments from the conservative/free-market angle structured as short bolded bullets.\n"
-        "- 'statistical_baseline': Pure, unarguable data parameters, cold facts, or undisputed structural timelines related to the topic.\n\n"
-        "Do not include any text outside the JSON brackets."
+    # SYSTEM PROMPT: Uses plain text markers instead of high-risk JSON structures
+    tag_constitution = (
+        "You are an uncompromisingly neutral observer for NotBias.com.\n\n"
+        "Analyze the user's prompt and split your response into exactly three sections. "
+        "You MUST separate the sections using these exact text dividers uppercase tags:\n"
+        "[START_PERSPECTIVE_A]\n"
+        "[START_PERSPECTIVE_B]\n"
+        "[START_BASELINE]\n\n"
+        "CRITICAL FORMATTING RULES:\n"
+        "1. Never write heavy walls of text. Break information into highly scannable bullet points.\n"
+        "2. Every bullet point must start with a **Bold Key Phrase Anchor** followed by a short explanation.\n"
+        "3. Provide equal depth, real estate, and structural tone to both Perspectives.\n\n"
+        "Structure your entire output exactly like this:\n"
+        "[START_PERSPECTIVE_A]\n"
+        "* **Anchor Keyword:** Detail point here.\n"
+        "* **Anchor Keyword:** Detail point here.\n"
+        "[START_PERSPECTIVE_B]\n"
+        "* **Anchor Keyword:** Detail point here.\n"
+        "* **Anchor Keyword:** Detail point here.\n"
+        "[START_BASELINE]\n"
+        "* **Metric:** Raw objective factual data points here."
     )
     
     with st.chat_message("assistant"):
         with st.spinner("Isolating viewpoints..."):
             try:
+                # Call Groq without the rigid JSON mode constraint
                 completion = client.chat.completions.create(
                     model="llama-3.1-8b-instant",
                     messages=[
-                        {"role": "system", "content": json_constitution},
+                        {"role": "system", "content": tag_constitution},
                         {"role": "user", "content": user_query}
-                    ],
-                    response_format={"type": "json_object"} 
+                    ]
                 )
                 
-                data = json.loads(completion.choices[0].message.content)
+                raw_text = completion.choices[0].message.content
                 
-                # Visual Side-by-Side Card Layout
+                # Robust Safe-Parsing Fallback Logic
+                p_a, p_b, baseline = "Data extraction failed.", "Data extraction failed.", "Data extraction failed."
+                
+                if "[START_PERSPECTIVE_A]" in raw_text and "[START_PERSPECTIVE_B]" in raw_text and "[START_BASELINE]" in raw_text:
+                    try:
+                        part_a_and_more = raw_text.split("[START_PERSPECTIVE_A]")[1]
+                        p_a, remaining = part_a_and_more.split("[START_PERSPECTIVE_B]")
+                        p_b, baseline = remaining.split("[START_BASELINE]")
+                        p_a, p_b, baseline = p_a.strip(), p_b.strip(), baseline.strip()
+                    except Exception:
+                        # Fallback if text splitting clips weirdly
+                        p_a, p_b, baseline = raw_text, "Review full transcript below.", ""
+                else:
+                    p_a = raw_text
+                
+                # Render UI Columns using parsed text
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.markdown(f"""
-                    <div class="ui-card card-left">
-                        <div class="card-header">🟢 Perspective A</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    st.markdown(data.get("left_perspective", "Data missing."))
+                    st.markdown('<div class="ui-card card-left"><div class="card-header">🟢 Perspective A</div></div>', unsafe_allow_html=True)
+                    st.markdown(p_a)
                     
                 with col2:
-                    st.markdown(f"""
-                    <div class="ui-card card-right">
-                        <div class="card-header">🔵 Perspective B</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    st.markdown(data.get("right_perspective", "Data missing."))
+                    st.markdown('<div class="ui-card card-right"><div class="card-header">🔵 Perspective B</div></div>', unsafe_allow_html=True)
+                    st.markdown(p_b)
                     
                 st.markdown("<br>", unsafe_allow_html=True)
                 
-                # Baseline Facts Card
-                st.markdown(f"""
-                <div class="ui-card card-data">
-                    <div class="card-header">📊 Objective Baseline Metrics</div>
-                </div>
-                """, unsafe_allow_html=True)
-                st.markdown(data.get("statistical_baseline", "Data missing."))
+                st.markdown('<div class="ui-card card-data"><div class="card-header">📊 Objective Baseline Metrics</div></div>', unsafe_allow_html=True)
+                st.markdown(baseline)
                 
             except Exception as e:
                 st.error(f"Error compiling dashboard: {e}")
