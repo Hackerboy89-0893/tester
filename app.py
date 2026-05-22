@@ -7,15 +7,67 @@ st.set_page_config(page_title="NotBias.com", layout="wide")
 
 # 2. Refined Modern UI Styles
 st.markdown("""
+# 2. Refined Modern UI Styles
+st.markdown("""
 <style>
-    html, body, [data-testid="stAppViewContainer"] { background-color: #ffffff; color: #1e293b; font-family: 'Inter', sans-serif; }
-    .ui-card { background: #ffffff; padding: 20px; border-radius: 16px; border: 1px solid #f1f5f9; margin-bottom: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+    html, body, [data-testid="stAppViewContainer"] {
+        background-color: #f8fafc;
+        color: #1e293b;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .ui-card {
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 16px;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+
     .card-left { border-left: 5px solid #10b981; }
     .card-right { border-left: 5px solid #3b82f6; }
     .card-data { border-left: 5px solid #f59e0b; background: #fffbeb; }
-    .card-verdict { border: 1px solid #e9d5ff; background: #faf5ff; }
-    .header-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; letter-spacing: 0.05em; }
+    .card-verdict { border-left: 5px solid #c084fc; background: #faf5ff; }
+
+    .header-label {
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin-bottom: 8px;
+        letter-spacing: 0.05em;
+    }
+
+    /* Input box styling like the screenshot */
+    .stTextInput>div>div>input {
+        border-radius: 16px;
+        padding: 12px 16px;
+        border: 1px solid #e5e7eb;
+        font-size: 14px;
+        color: #1e293b;
+    }
+
+    /* Buttons */
+    .stButton>button {
+        border-radius: 16px;
+        padding: 10px 24px;
+        background-color: #7c3aed;
+        color: #fff;
+        font-weight: 600;
+        border: none;
+    }
+
+    .stButton>button:hover {
+        background-color: #6b21a8;
+    }
+
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background-color: #ffffff;
+    }
 </style>
+""", unsafe_allow_html=True)
 """, unsafe_allow_html=True)
 
 # 3. State Management
