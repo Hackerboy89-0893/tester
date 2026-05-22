@@ -1,48 +1,62 @@
 import streamlit as st
+import json
 from groq import Groq
 
-# 1. Page Configuration
-st.set_page_config(page_title="NotBias.com Prototype", layout="centered")
+st.set_page_config(page_title="NotBias.com", layout="wide") # Set to wide layout for columns
 st.title("⚖️ NotBias.com")
-st.caption("The world's least biased AI engine. Stripping out corporate and political alignment.")
+st.caption("Forcing machine neutrality through multi-perspective isolation.")
 
-# 2. Secure API Key Pull
 try:
     api_key = st.secrets["GROQ_API_KEY"]
     client = Groq(api_key=api_key)
 except Exception as e:
-    st.error("API Key missing. Please configure GROQ_API_KEY in Streamlit Secrets.")
+    st.error("API Key missing in Secrets.")
     st.stop()
 
-# 3. Modern Chat Input with Built-in Send Button
-# This replaces both the text box and the separate button, placing a send arrow right inside the bar!
 if user_query := st.chat_input("Enter a heavily debated or controversial topic..."):
-    
-    # Show the user's question on screen
     st.chat_message("user").markdown(user_query)
     
-    # 4. The Neutrality Protocol
-    neutrality_constitution = (
-        "You are an uncompromisingly neutral observer for NotBias.com. "
-        "Your single task is to evaluate the user's query and strip away all emotional bias, "
-        "corporate safe-speak, and political alignment. "
-        "If the topic lacks a definitive factual consensus, you are strictly forbidden from choosing a side. "
-        "Instead, you must present the strongest data-backed arguments for the major prevailing viewpoints "
-        "side-by-side using clear, bolded markdown headers. Use objective, raw facts only."
+    # 1. System Prompt instructing JSON output
+    json_constitution = (
+        "You are a neutral backend data processor for NotBias.com. "
+        "You must analyze the user's prompt and output a JSON object with exactly three keys: "
+        "'left_perspective', 'right_perspective', and 'statistical_baseline'.\n\n"
+        "- 'left_perspective': The strongest, most steel-manned arguments from the progressive, reformist, or interventionist side.\n"
+        "- 'right_perspective': The strongest, most steel-manned arguments from the conservative, traditional, or free-market side.\n"
+        "- 'statistical_baseline': Pure, unarguable data points, historical facts, or economic baselines related to the topic, stripped of all adjectives.\n\n"
+        "Do not include any text outside the JSON object."
     )
     
-    # 5. Generate and Display Response
     with st.chat_message("assistant"):
-        with st.spinner("De-biasing data and checking perspectives..."):
+        with st.spinner("Isolating viewpoints..."):
             try:
+                # 2. Call Groq using JSON Mode
                 completion = client.chat.completions.create(
-                    model="llama-3.1-8b-instant", 
+                    model="llama-3.1-8b-instant",
                     messages=[
-                        {"role": "system", "content": neutrality_constitution},
+                        {"role": "system", "content": json_constitution},
                         {"role": "user", "content": user_query}
-                    ]
+                    ],
+                    response_format={"type": "json_object"} # Forces the AI to output perfect JSON
                 )
-                st.markdown(completion.choices[0].message.content)
+                
+                # 3. Parse the JSON response
+                data = json.loads(completion.choices[0].message.content)
+                
+                # 4. Create the Visual Split Screen Layout
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.subheader("🟢 Perspective A")
+                    st.info(data.get("left_perspective", "Data missing."))
+                    
+                with col2:
+                    st.subheader("🔵 Perspective B")
+                    st.info(data.get("right_perspective", "Data missing."))
+                    
+                st.markdown("---")
+                st.subheader("📊 Objective Data Baseline")
+                st.success(data.get("statistical_baseline", "Data missing."))
                 
             except Exception as e:
-                st.error(f"An error occurred: {e}")
+                st.error(f"Error compiling perspectives: {e}")
