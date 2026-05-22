@@ -36,7 +36,7 @@ if user_query := st.chat_input("Enter a heavily debated or controversial topic..
         with st.spinner("De-biasing data and checking perspectives..."):
             try:
                 completion = client.chat.completions.create(
-                    model="llama3-8b-8192", 
+                    model="llama-3.1-8b-instant", 
                     messages=[
                         {"role": "system", "content": neutrality_constitution},
                         {"role": "user", "content": user_query}
