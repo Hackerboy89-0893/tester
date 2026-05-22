@@ -6,7 +6,6 @@ import uuid
 st.set_page_config(page_title="NotBias.com", layout="wide")
 
 # 2. Refined Modern UI Styles
-st.markdown("""
 # 2. Refined Modern UI Styles
 st.markdown("""
 <style>
