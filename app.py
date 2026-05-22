@@ -5,42 +5,43 @@ import uuid
 # 1. Page Config & Layout Architecture
 st.set_page_config(page_title="NotBias.com Engine", layout="wide", initial_sidebar_state="expanded")
 
-# 2. Premium AI Chatbot Interface Dark Theme
+# 2. Sleek & White Premium AI Chatbot Interface (Light Minimalist Theme)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
-    /* Root App Canvas Remap */
+    /* Root App Canvas Remap - Premium Off-White Minimalist Canvas */
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         font-family: 'Inter', sans-serif;
-        background-color: #0b0d14 !important;
-        color: #f1f5f9 !important;
+        background-color: #fafafa !important;
+        color: #1e293b !important;
     }
     
-    /* Native Sidebar Restyling */
+    /* Native Sidebar Restyling - Clean Soft Gray */
     [data-testid="stSidebar"] {
-        background-color: #131622 !important;
-        border-right: 1px solid #22293f !important;
+        background-color: #f4f4f5 !important;
+        border-right: 1px solid #e4e4e7 !important;
     }
     
     /* Dynamic Buttons & Workspace Selectors */
     .stButton > button {
-        background-color: #1e2538 !important;
-        color: #e2e8f0 !important;
-        border: 1px solid #2e3956 !important;
+        background-color: #ffffff !important;
+        color: #27272a !important;
+        border: 1px solid #e4e4e7 !important;
         border-radius: 10px !important;
         font-weight: 500 !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
         transition: all 0.2s ease;
     }
     .stButton > button:hover {
-        background-color: #2b354f !important;
-        border-color: #3b82f6 !important;
-        color: #ffffff !important;
+        background-color: #fafafa !important;
+        border-color: #cbd5e1 !important;
+        color: #000000 !important;
     }
     
-    /* Active Thread Navigation Button Highlight Overrides */
+    /* Active Thread Navigation Button Highlight Overrides - Deep Minimalist Accent */
     div[data-testid="stSidebar"] .stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+        background: #0f172a !important;
         color: #ffffff !important;
         border: none !important;
     }
@@ -52,45 +53,49 @@ st.markdown("""
         padding: 1.5rem 0rem !important;
     }
     
-    /* Premium Glassmorphism UI Cards inside the Assistant rows */
+    /* Sleek White UI Cards inside the Assistant rows with crisp shadows */
     .ui-card {
-        background: rgba(25, 30, 48, 0.65);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        background: #ffffff;
         padding: 20px;
-        border-radius: 14px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
         margin-top: 10px;
-        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     }
     
-    /* Perspective Card Accents */
-    .card-left { border-top: 4px solid #10b981; }  
-    .card-right { border-top: 4px solid #3b82f6; } 
-    .card-data { border-left: 4px solid #f59e0b; background: rgba(30, 35, 54, 0.4); } 
+    /* Perspective Card Left Accents */
+    .card-left { border-left: 4px solid #10b981; }  
+    .card-right { border-left: 4px solid #3b82f6; } 
+    .card-data { border-left: 4px solid #f59e0b; background: #f8fafc; } 
     
     .card-header {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: #94a3b8;
-        margin-bottom: 10px;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin-bottom: 12px;
     }
 
     /* Clean Floating Text Tray Anchor adjustments */
     [data-testid="stChatInput"] {
-        background-color: #131622 !important;
-        border: 1px solid #2d3748 !important;
+        background-color: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
         border-radius: 14px !important;
+        box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05) !important;
     }
     
-    /* Global Markdown Text Coloring Fixes */
+    /* Global Markdown Text Coloring Fixes for High-Contrast Light Mode */
     h1, h2, h3, h4, p, li, span {
-        color: #f1f5f9 !important;
+        color: #1e293b !important;
     }
     strong {
-        color: #ffffff !important;
+        color: #0f172a !important;
+    }
+    
+    /* Target user input chat text specifically to contrast elegantly */
+    [data-testid="stChatMessage"] p {
+        color: #334155 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -114,8 +119,8 @@ except Exception as e:
 # SIDEBAR NAVIGATION (THE CHAT TABS AND HISTORY)
 # =====================================================================
 with st.sidebar:
-    st.markdown("<h2 style='font-size:22px; font-weight:700; margin-bottom:4px;'>NotBias.com</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:12px; color:#64748b; margin-bottom:20px;'>Neural Architecture v2.0</p>", unsafe_allow_html=True)
+    st.markdown("<h2 style='font-size:20px; font-weight:700; color:#0f172a; margin-bottom:2px;'>NotBias.com</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:11px; color:#94a3b8; margin-bottom:20px;'>Neural Architecture v2.0</p>", unsafe_allow_html=True)
     
     # Create a brand new workspace chat session 
     if st.button("➕ New Thread", use_container_width=True, type="secondary"):
@@ -124,7 +129,7 @@ with st.sidebar:
         st.session_state.active_session_id = new_id
         st.rerun()
 
-    st.markdown("<br><p style='font-size:11px; font-weight:700; color:#475569; letter-spacing:0.08em;'>CONVERSATIONS</p>", unsafe_allow_html=True)
+    st.markdown("<br><p style='font-size:10px; font-weight:700; color:#94a3b8; letter-spacing:0.08em;'>CONVERSATIONS</p>", unsafe_allow_html=True)
     
     # Render loop to paint history navigation lists
     for session_id, session_data in list(st.session_state.chat_sessions.items()):
@@ -148,7 +153,7 @@ current_session = st.session_state.chat_sessions[active_id]
 # Minimalist Welcome Board (ChatGPT/Gemini Style Startup Node)
 if not current_session["messages"]:
     st.markdown("<br><br><br><br>", unsafe_allow_html=True)
-    st.markdown("<h1 style='text-align: center; font-size: 36px; font-weight: 700; background: linear-gradient(135deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>What can I balance for you today?</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; font-size: 34px; font-weight: 700; color: #0f172a; letter-spacing: -0.02em;'>What can I balance for you today?</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #64748b; font-size: 15px;'>Enter any highly controversial topic or debate to extract real-time adversarial framework perspectives.</p>", unsafe_allow_html=True)
 
 # Render existing chat logs natively from history state
@@ -156,7 +161,6 @@ for msg in current_session["messages"]:
     if msg["role"] == "user":
         st.chat_message("user").markdown(msg["content"])
     elif msg["role"] == "assistant":
-        # CHATBOT DESIGN FIX: Wrapping the split layout completely inside a native assistant container bubble
         with st.chat_message("assistant", avatar="⚖️"):
             col1, col2 = st.columns(2)
             with col1:
