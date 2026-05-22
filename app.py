@@ -2,45 +2,88 @@ import streamlit as st
 from groq import Groq
 import uuid
 
-# 1. Page Config & Wide Layout (Crucial for sidebar dashboard panels)
+# 1. Page Config & Layout Architecture
 st.set_page_config(page_title="NotBias.com Engine", layout="wide", initial_sidebar_state="expanded")
 
-# 2. Advanced Premium CSS UI Theme (ChatGPT Dark/Light-neutral aesthetic)
+# 2. Native AI Dashboard Dark Theme CSS Inject
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
-    html, body, [data-testid="stMarkdownContainer"] {
+    /* Root App Canvas Remap */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         font-family: 'Inter', sans-serif;
-        color: #1e293b;
+        background-color: #0b0d14 !important;
+        color: #f1f5f9 !important;
     }
     
-    /* Sidebar styling adjustment */
+    /* Native Sidebar Restyling */
     [data-testid="stSidebar"] {
-        background-color: #f8fafc;
-        border-right: 1px solid #e2e8f0;
+        background-color: #131622 !important;
+        border-right: 1px solid #22293f !important;
     }
     
-    /* Premium visual layout cards */
-    .ui-card {
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-        border: 1px solid #e2e8f0;
-        margin-bottom: 16px;
+    /* Dynamic Buttons & Workspace Selectors */
+    .stButton > button {
+        background-color: #1e2538 !important;
+        color: #e2e8f0 !important;
+        border: 1px solid #2e3956 !important;
+        border-radius: 10px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease;
     }
-    .card-left { border-top: 4px solid #10b981; }  /* Green Perspective */
-    .card-right { border-top: 4px solid #3b82f6; } /* Blue Perspective */
-    .card-data { border-left: 4px solid #64748b; background-color: #f8fafc; } /* Slate Baseline */
+    .stButton > button:hover {
+        background-color: #2b354f !important;
+        border-color: #3b82f6 !important;
+        color: #ffffff !important;
+    }
+    
+    /* Active Thread Navigation Button Highlight Overrides */
+    div[data-testid="stSidebar"] .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+        color: #ffffff !important;
+        border: none !important;
+    }
+
+    /* Premium Glassmorphism UI Cards */
+    .ui-card {
+        background: rgba(25, 30, 48, 0.65);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        padding: 24px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+    }
+    
+    /* Perspective Card Accents */
+    .card-left { border-top: 4px solid #10b981; }  
+    .card-right { border-top: 4px solid #3b82f6; } 
+    .card-data { border-left: 4px solid #f59e0b; background: rgba(30, 35, 54, 0.4); } 
     
     .card-header {
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #475569;
-        margin-bottom: 12px;
+        letter-spacing: 0.1em;
+        color: #94a3b8;
+        margin-bottom: 14px;
+    }
+
+    /* Clean Floating Text Tray Anchor adjustments */
+    [data-testid="stChatInput"] {
+        background-color: #131622 !important;
+        border: 1px solid #2d3748 !important;
+        border-radius: 14px !important;
+    }
+    
+    /* Global Markdown Text Coloring Fixes */
+    h1, h2, h3, h4, p, li, span {
+        color: #f1f5f9 !important;
+    }
+    strong {
+        color: #ffffff !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -64,27 +107,26 @@ except Exception as e:
 # SIDEBAR NAVIGATION (THE CHAT TABS AND HISTORY)
 # =====================================================================
 with st.sidebar:
-    st.title("⚖️ NotBias.com")
-    st.caption("Machine Neutrality Panel v1.2")
-    st.markdown("---")
+    st.markdown("<h2 style='font-size:22px; font-weight:700; margin-bottom:4px;'>NotBias.com</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:12px; color:#64748b; margin-bottom:20px;'>Neural Architecture v2.0</p>", unsafe_allow_html=True)
     
-    # Action Control: Create a brand new chat tab
-    if st.button("➕ New Conversation Thread", use_container_width=True, type="primary"):
+    # Create a brand new workspace chat session 
+    if st.button("➕ New Thread", use_container_width=True, type="secondary"):
         new_id = str(uuid.uuid4())
         st.session_state.chat_sessions[new_id] = {"title": "⚖️ New Analysis", "messages": []}
         st.session_state.active_session_id = new_id
         st.rerun()
 
-    st.markdown("<br><p style='font-size:12px; font-weight:600; color:#94a3b8;'>RECENT THREADS</p>", unsafe_allow_html=True)
+    st.markdown("<br><p style='font-size:11px; font-weight:700; color:#475569; letter-spacing:0.08em;'>CONVERSATIONS</p>", unsafe_allow_html=True)
     
-    # Loop through and generate dynamic navigation tabs
+    # Render loop to paint history navigation lists
     for session_id, session_data in list(st.session_state.chat_sessions.items()):
         is_active = (session_id == st.session_state.active_session_id)
-        btn_type = "secondary" if not is_active else "primary"
+        btn_type = "primary" if is_active else "secondary"
         
         display_title = session_data["title"]
-        if len(display_title) > 28:
-            display_title = display_title[:25] + "..."
+        if len(display_title) > 26:
+            display_title = display_title[:23] + "..."
             
         if st.button(display_title, key=f"nav_{session_id}", use_container_width=True, type=btn_type):
             st.session_state.active_session_id = session_id
@@ -96,11 +138,11 @@ with st.sidebar:
 active_id = st.session_state.active_session_id
 current_session = st.session_state.chat_sessions[active_id]
 
-# Welcoming layout display if chat history database log is empty
+# Minimalist Welcome Board (ChatGPT/Gemini Style Startup Node)
 if not current_session["messages"]:
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    st.subheader("Enter a controversial topic, historical question, or debate baseline.")
-    st.info("The system will actively deploy multi-model adversarial checks to isolate confirmation bias and present structural data lines.")
+    st.markdown("<br><br><br><br>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; font-size: 36px; font-weight: 700; background: linear-gradient(135deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>What can I balance for you today?</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #64748b; font-size: 15px;'>Enter any highly controversial topic or debate to extract real-time adversarial framework perspectives.</p>", unsafe_allow_html=True)
 
 # Render existing chat logs from storage for the active session
 for msg in current_session["messages"]:
@@ -110,27 +152,23 @@ for msg in current_session["messages"]:
         with st.chat_message("assistant"):
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown('<div class="ui-card card-left"><div class="card-header">🟢 Perspective A</div></div>', unsafe_allow_html=True)
+                st.markdown('<div class="ui-card card-left"><div class="card-header">🟢 Perspective A (Interventionist / Reformist)</div></div>', unsafe_allow_html=True)
                 st.markdown(msg["p_a"])
             with col2:
-                st.markdown('<div class="ui-card card-right"><div class="card-header">🔵 Perspective B</div></div>', unsafe_allow_html=True)
+                st.markdown('<div class="ui-card card-right"><div class="card-header">🔵 Perspective B (Traditionalist / Free-Market)</div></div>', unsafe_allow_html=True)
                 st.markdown(msg["p_b"])
             st.markdown('<div class="ui-card card-data"><div class="card-header">📊 Objective Metrics & Structural Baselines</div></div>', unsafe_allow_html=True)
             st.markdown(msg["baseline"])
 
-# Accept new inputs from the clean floating input text tray line
-if user_query := st.chat_input("Query the neutral matrix..."):
-    # Immediately render your user query bubble onto screen
+# Floating Input Processing Logic Triggers
+if user_query := st.chat_input("Ask notbias.com..."):
     st.chat_message("user").markdown(user_query)
     
-    # Auto-rename the generic tab name to mirror your topic instantly
     if current_session["title"] in ["⚖️ New Analysis", "⚖️ First Neutral Analysis"]:
-        current_session["title"] = f"⚖️ {user_query.strip().capitalize()}"
+        current_session["title"] = f"💬 {user_query.strip().capitalize()}"
         
-    # Commit your prompt trace into the persistent app structural storage history
     current_session["messages"].append({"role": "user", "content": user_query})
     
-    # Central Neutrality Prompt Architecture Blueprint
     tag_constitution = (
         "You are an uncompromisingly neutral observer for NotBias.com.\n\n"
         "Analyze the user's prompt and split your response into exactly three sections "
@@ -146,7 +184,7 @@ if user_query := st.chat_input("Query the neutral matrix..."):
     )
     
     with st.chat_message("assistant"):
-        with st.spinner("Processing framework nodes..."):
+        with st.spinner("Isolating spectrum markers..."):
             try:
                 completion = client.chat.completions.create(
                     model="llama-3.1-8b-instant",
@@ -158,45 +196,39 @@ if user_query := st.chat_input("Query the neutral matrix..."):
                 
                 raw_text = completion.choices[0].message.content
                 
-                # NEW ADAPTIVE PARSING ENGINE (Completely immune to missing or dropped tags)
-                p_a = "No data generated for this section."
-                p_b = "No data generated for this section."
-                baseline = "ℹ️ No historical baseline data returned for this query."
+                # Adaptive Parsing Block
+                p_a, p_b, baseline = "No data generated.", "No data generated.", "No data generated."
                 
-                # Step 1: Extract everything after Perspective A
                 if "[START_PERSPECTIVE_A]" in raw_text:
                     remainder_a = raw_text.split("[START_PERSPECTIVE_A]", 1)[1]
                 else:
                     remainder_a = raw_text
 
-                # Step 2: Split apart Perspective A and Perspective B
                 if "[START_PERSPECTIVE_B]" in remainder_a:
                     p_a, remainder_b = remainder_a.split("[START_PERSPECTIVE_B]", 1)
                 else:
                     p_a = remainder_a
                     remainder_b = ""
 
-                # Step 3: Split apart Perspective B and the Baseline Data
                 if "[START_BASELINE]" in remainder_b:
                     p_b, baseline = remainder_b.split("[START_BASELINE]", 1)
                 else:
                     p_b = remainder_b
                 
-                # Clean up stray white spaces cleanly
                 p_a, p_b, baseline = p_a.strip(), p_b.strip(), baseline.strip()
                 
                 # Render live visually onto dashboard space grids
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.markdown('<div class="ui-card card-left"><div class="card-header">🟢 Perspective A</div></div>', unsafe_allow_html=True)
+                    st.markdown('<div class="ui-card card-left"><div class="card-header">🟢 Perspective A (Interventionist / Reformist)</div></div>', unsafe_allow_html=True)
                     st.markdown(p_a)
                 with col2:
-                    st.markdown('<div class="ui-card card-right"><div class="card-header">🔵 Perspective B</div></div>', unsafe_allow_html=True)
+                    st.markdown('<div class="ui-card card-right"><div class="card-header">🔵 Perspective B (Traditionalist / Free-Market)</div></div>', unsafe_allow_html=True)
                     st.markdown(p_b)
                 st.markdown('<div class="ui-card card-data"><div class="card-header">📊 Objective Metrics & Structural Baselines</div></div>', unsafe_allow_html=True)
                 st.markdown(baseline)
                 
-                # Save structured output into persistent message logs state arrays 
+                # Append structures cleanly into history storage logs
                 current_session["messages"].append({
                     "role": "assistant",
                     "p_a": p_a,
@@ -204,7 +236,6 @@ if user_query := st.chat_input("Query the neutral matrix..."):
                     "baseline": baseline
                 })
                 
-                # Force instant UI paint refresh sync cycle
                 st.rerun()
                 
             except Exception as e:
