@@ -2,83 +2,95 @@ import streamlit as st
 from groq import Groq
 import uuid
 
-# (Keep your existing Page Config and CSS up to the '.card-data' class)
-# ADD THIS TO YOUR CSS SECTION TO STYLE THE NEW VERDICT CARD
+# 1. Page Config
+st.set_page_config(page_title="NotBias.com Engine", layout="wide")
+
+# 2. Sleek Minimalist CSS
 st.markdown("""
 <style>
-    /* ... (Keep previous CSS) ... */
-    .card-verdict { border-top: 4px solid #a855f7; background: #faf5ff; }
+    html, body, [data-testid="stAppViewContainer"] { background-color: #fafafa; color: #1e293b; font-family: 'Inter', sans-serif; }
+    .ui-card { background: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-top: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    .card-left { border-left: 4px solid #10b981; }
+    .card-right { border-left: 4px solid #3b82f6; }
+    .card-data { border-left: 4px solid #f59e0b; background: #f8fafc; }
+    .card-verdict { border-top: 4px solid #a855f7; background: #faf5ff; margin-top: 15px; }
+    .card-header { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
-# ... (Keep session state and sidebar code as is) ...
+# 3. Session State
+if "chat_sessions" not in st.session_state:
+    first_id = str(uuid.uuid4())
+    st.session_state.chat_sessions = {first_id: {"title": "⚖️ New Analysis", "messages": []}}
+    st.session_state.active_session_id = first_id
 
-# UPDATE THE PROMPT CONSTITUTION TO INCLUDE THE VERDICT TAG
-    tag_constitution = (
-        "You are an uncompromisingly neutral observer for NotBias.com.\n\n"
-        "Analyze the user's prompt and split your response into exactly four sections "
-        "separated by these exact uppercase system tags:\n"
-        "[START_PERSPECTIVE_A]\n"
-        "[START_PERSPECTIVE_B]\n"
-        "[START_BASELINE]\n"
-        "[START_VERDICT]\n\n"
-        "CRITICAL ARCHITECTURE RULES:\n"
-        "1. Perspective A/B: Punchy micro-bullets with **Bold Anchors**.\n"
-        "2. Baseline: Raw objective facts.\n"
-        "3. Verdict: A concise 2-sentence synthesis of why this is debated and the objective middle ground."
-    )
+try:
+    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+except:
+    st.error("Missing GROQ_API_KEY")
+    st.stop()
 
-# ... (Keep your chat loop until the Assistant rendering logic) ...
+# 4. Sidebar
+with st.sidebar:
+    st.title("NotBias.com")
+    if st.button("➕ New Thread"):
+        new_id = str(uuid.uuid4())
+        st.session_state.chat_sessions[new_id] = {"title": "⚖️ New Analysis", "messages": []}
+        st.session_state.active_session_id = new_id
+        st.rerun()
+    
+    for sid, sdata in st.session_state.chat_sessions.items():
+        if st.button(sdata["title"], key=sid):
+            st.session_state.active_session_id = sid
+            st.rerun()
 
+# 5. Main Chat Logic
+active_id = st.session_state.active_session_id
+current_session = st.session_state.chat_sessions[active_id]
+
+for msg in current_session["messages"]:
     with st.chat_message("assistant", avatar="⚖️"):
-        with st.spinner("Isolating spectrum markers..."):
-            try:
-                completion = client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=[
-                        {"role": "system", "content": tag_constitution},
-                        {"role": "user", "content": user_query}
-                    ]
-                )
-                
-                raw_text = completion.choices[0].message.content
-                
-                # ADAPTIVE PARSING ENGINE (Updated for 4 tags)
-                p_a, p_b, baseline, verdict = "...", "...", "...", "..."
-                
-                if "[START_PERSPECTIVE_A]" in raw_text:
-                    remainder_a = raw_text.split("[START_PERSPECTIVE_A]", 1)[1]
-                else: remainder_a = raw_text
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown('<div class="ui-card card-left"><div class="card-header">🟢 Perspective A</div></div>', unsafe_allow_html=True)
+            st.markdown(msg["p_a"])
+        with col2:
+            st.markdown('<div class="ui-card card-right"><div class="card-header">🔵 Perspective B</div></div>', unsafe_allow_html=True)
+            st.markdown(msg["p_b"])
+        st.markdown('<div class="ui-card card-data"><div class="card-header">📊 Baseline</div></div>', unsafe_allow_html=True)
+        st.markdown(msg["baseline"])
+        st.markdown(f'<div class="ui-card card-verdict"><div class="card-header">⚖️ Final Verdict</div>{msg["verdict"]}</div>', unsafe_allow_html=True)
 
-                if "[START_PERSPECTIVE_B]" in remainder_a:
-                    p_a, remainder_b = remainder_a.split("[START_PERSPECTIVE_B]", 1)
-                else: p_a, remainder_b = remainder_a, ""
-
-                if "[START_BASELINE]" in remainder_b:
-                    p_b, remainder_c = remainder_b.split("[START_BASELINE]", 1)
-                else: p_b, remainder_c = remainder_b, ""
-
-                if "[START_VERDICT]" in remainder_c:
-                    baseline, verdict = remainder_c.split("[START_VERDICT]", 1)
-                else: baseline = remainder_c
-                
-                # RENDER UI
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown('<div class="ui-card card-left"><div class="card-header">🟢 Perspective A</div></div>', unsafe_allow_html=True)
-                    st.markdown(p_a.strip())
-                with col2:
-                    st.markdown('<div class="ui-card card-right"><div class="card-header">🔵 Perspective B</div></div>', unsafe_allow_html=True)
-                    st.markdown(p_b.strip())
-                
-                st.markdown('<div class="ui-card card-data"><div class="card-header">📊 Metrics</div></div>', unsafe_allow_html=True)
-                st.markdown(baseline.strip())
-                
-                # NEW FINAL VERDICT CARD
-                st.markdown(f'<div class="ui-card card-verdict"><div class="card-header">⚖️ Final Verdict</div>{verdict.strip()}</div>', unsafe_allow_html=True)
-                
-                # Save to history
-                current_session["messages"].append({"role": "assistant", "p_a": p_a, "p_b": p_b, "baseline": baseline, "verdict": verdict})
-                st.rerun()
-            except Exception as e:
-                st.error(f"Core Error: {e}")
+if user_query := st.chat_input("Ask notbias.com..."):
+    st.chat_message("user").markdown(user_query)
+    current_session["title"] = f"💬 {user_query[:20]}..."
+    
+    # INDENTATION FIXED: This variable is now at the correct level
+    tag_constitution = (
+        "You are an uncompromisingly neutral observer. Split response into:\n"
+        "[START_PERSPECTIVE_A]\n[START_PERSPECTIVE_B]\n[START_BASELINE]\n[START_VERDICT]"
+    )
+    
+    with st.chat_message("assistant", avatar="⚖️"):
+        with st.spinner("Analyzing..."):
+            completion = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{"role": "system", "content": tag_constitution}, {"role": "user", "content": user_query}]
+            )
+            raw = completion.choices[0].message.content
+            
+            # Simple Parser
+            parts = {"p_a": "...", "p_b": "...", "baseline": "...", "verdict": "..."}
+            if "[START_PERSPECTIVE_A]" in raw:
+                try:
+                    s = raw.split("[START_PERSPECTIVE_A]")[1].split("[START_PERSPECTIVE_B]")
+                    parts["p_a"] = s[0]
+                    s2 = s[1].split("[START_BASELINE]")
+                    parts["p_b"] = s2[0]
+                    s3 = s2[1].split("[START_VERDICT]")
+                    parts["baseline"] = s3[0]
+                    parts["verdict"] = s3[1]
+                except: pass
+            
+            st.rerun()
+            current_session["messages"].append(parts)
