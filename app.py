@@ -42,28 +42,30 @@ with st.sidebar:
             st.session_state.active_session_id = sid
             st.rerun()
 
-# 5. Main Chat Display
+# 5. Main Chat Display (Updated with safety checks)
 active_id = st.session_state.active_session_id
 current_session = st.session_state.chat_sessions[active_id]
 
 # Show all history
 for msg in current_session["messages"]:
-    # Show user message
+    # Use .get() to prevent KeyError if data format is old
     with st.chat_message("user"):
-        st.markdown(msg["user_q"])
-    # Show assistant message
+        st.markdown(msg.get("user_q", "User query"))
+        
     with st.chat_message("assistant"):
         col1, col2 = st.columns(2)
         with col1:
             st.markdown('<div class="header-label">Perspective A</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="ui-card card-left">{msg["p_a"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="ui-card card-left">{msg.get("p_a", "...")}</div>', unsafe_allow_html=True)
         with col2:
             st.markdown('<div class="header-label">Perspective B</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="ui-card card-right">{msg["p_b"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="ui-card card-right">{msg.get("p_b", "...")}</div>', unsafe_allow_html=True)
+            
         st.markdown('<div class="header-label">Baseline Facts</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="ui-card card-data">{msg["baseline"]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="ui-card card-data">{msg.get("baseline", "...")}</div>', unsafe_allow_html=True)
+        
         st.markdown('<div class="header-label">Final Verdict</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="ui-card card-verdict">{msg["verdict"]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="ui-card card-verdict">{msg.get("verdict", "...")}</div>', unsafe_allow_html=True)
 
 # 6. Process Input
 if user_query := st.chat_input("Ask about any topic..."):
