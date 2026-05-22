@@ -68,7 +68,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-""", unsafe_allow_html=True)
 
 # 3. State Management
 if "chat_sessions" not in st.session_state:
