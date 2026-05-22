@@ -16,34 +16,38 @@ except Exception as e:
 if user_query := st.chat_input("Enter a heavily debated or controversial topic..."):
     st.chat_message("user").markdown(user_query)
     
-    # 1. System Prompt instructing JSON output
+    # THE FIX: Explicitly commanding flat strings to satisfy Groq's JSON validator
     json_constitution = (
         "You are a neutral backend data processor for NotBias.com. "
-        "You must analyze the user's prompt and output a JSON object with exactly three keys: "
+        "You must analyze the user's prompt and output a valid JSON object with exactly three keys: "
         "'left_perspective', 'right_perspective', and 'statistical_baseline'.\n\n"
-        "- 'left_perspective': The strongest, most steel-manned arguments from the progressive, reformist, or interventionist side.\n"
-        "- 'right_perspective': The strongest, most steel-manned arguments from the conservative, traditional, or free-market side.\n"
-        "- 'statistical_baseline': Pure, unarguable data points, historical facts, or economic baselines related to the topic, stripped of all adjectives.\n\n"
-        "Do not include any text outside the JSON object."
+        "CRITICAL CODE RULES:\n"
+        "1. The value for EVERY key MUST be a flat plain text string.\n"
+        "2. Do NOT create nested dictionary objects, arrays, or lists inside the values.\n"
+        "3. If you want to list items, format them as a single string using standard text-based bullet points or line breaks.\n\n"
+        "- 'left_perspective': A comprehensive text string explaining the arguments from the progressive, reformist, or interventionist side.\n"
+        "- 'right_perspective': A comprehensive text string explaining the arguments from the conservative, traditional, or free-market side.\n"
+        "- 'statistical_baseline': A text string listing raw, unarguable data points, historical facts, or baseline metrics related to the topic, completely stripped of all opinion.\n\n"
+        "Do not include any text outside the JSON object brackets."
     )
     
     with st.chat_message("assistant"):
         with st.spinner("Isolating viewpoints..."):
             try:
-                # 2. Call Groq using JSON Mode
+                # Call Groq using JSON Mode
                 completion = client.chat.completions.create(
                     model="llama-3.1-8b-instant",
                     messages=[
                         {"role": "system", "content": json_constitution},
                         {"role": "user", "content": user_query}
                     ],
-                    response_format={"type": "json_object"} # Forces the AI to output perfect JSON
+                    response_format={"type": "json_object"} 
                 )
                 
-                # 3. Parse the JSON response
+                # Parse the JSON response
                 data = json.loads(completion.choices[0].message.content)
                 
-                # 4. Create the Visual Split Screen Layout
+                # Create the Visual Split Screen Layout
                 col1, col2 = st.columns(2)
                 
                 with col1:
