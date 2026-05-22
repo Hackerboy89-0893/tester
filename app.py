@@ -5,7 +5,7 @@ import uuid
 # 1. Page Config
 st.set_page_config(page_title="NotBias.com Engine", layout="wide")
 
-# 2. Sleek Minimalist CSS
+# 2. Styles
 st.markdown("""
 <style>
     html, body, [data-testid="stAppViewContainer"] { background-color: #fafafa; color: #1e293b; font-family: 'Inter', sans-serif; }
@@ -18,7 +18,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Session State
+# 3. State
 if "chat_sessions" not in st.session_state:
     first_id = str(uuid.uuid4())
     st.session_state.chat_sessions = {first_id: {"title": "⚖️ New Analysis", "messages": []}}
@@ -27,7 +27,6 @@ if "chat_sessions" not in st.session_state:
 try:
     client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 except:
-    st.error("Missing GROQ_API_KEY")
     st.stop()
 
 # 4. Sidebar
@@ -38,7 +37,6 @@ with st.sidebar:
         st.session_state.chat_sessions[new_id] = {"title": "⚖️ New Analysis", "messages": []}
         st.session_state.active_session_id = new_id
         st.rerun()
-    
     for sid, sdata in st.session_state.chat_sessions.items():
         if st.button(sdata["title"], key=sid):
             st.session_state.active_session_id = sid
@@ -48,6 +46,7 @@ with st.sidebar:
 active_id = st.session_state.active_session_id
 current_session = st.session_state.chat_sessions[active_id]
 
+# DISPLAY HISTORY
 for msg in current_session["messages"]:
     with st.chat_message("assistant", avatar="⚖️"):
         col1, col2 = st.columns(2)
@@ -61,13 +60,12 @@ for msg in current_session["messages"]:
         st.markdown(msg["baseline"])
         st.markdown(f'<div class="ui-card card-verdict"><div class="card-header">⚖️ Final Verdict</div>{msg["verdict"]}</div>', unsafe_allow_html=True)
 
+# PROCESS NEW INPUT
 if user_query := st.chat_input("Ask notbias.com..."):
     st.chat_message("user").markdown(user_query)
-    current_session["title"] = f"💬 {user_query[:20]}..."
     
-    # INDENTATION FIXED: This variable is now at the correct level
     tag_constitution = (
-        "You are an uncompromisingly neutral observer. Split response into:\n"
+        "You are an uncompromisingly neutral observer. Split response into exactly 4 sections:\n"
         "[START_PERSPECTIVE_A]\n[START_PERSPECTIVE_B]\n[START_BASELINE]\n[START_VERDICT]"
     )
     
@@ -79,18 +77,19 @@ if user_query := st.chat_input("Ask notbias.com..."):
             )
             raw = completion.choices[0].message.content
             
-            # Simple Parser
+            # Parsing
             parts = {"p_a": "...", "p_b": "...", "baseline": "...", "verdict": "..."}
-            if "[START_PERSPECTIVE_A]" in raw:
-                try:
-                    s = raw.split("[START_PERSPECTIVE_A]")[1].split("[START_PERSPECTIVE_B]")
-                    parts["p_a"] = s[0]
-                    s2 = s[1].split("[START_BASELINE]")
-                    parts["p_b"] = s2[0]
-                    s3 = s2[1].split("[START_VERDICT]")
-                    parts["baseline"] = s3[0]
-                    parts["verdict"] = s3[1]
-                except: pass
+            try:
+                s = raw.split("[START_PERSPECTIVE_A]")[1].split("[START_PERSPECTIVE_B]")
+                parts["p_a"] = s[0]
+                s2 = s[1].split("[START_BASELINE]")
+                parts["p_b"] = s2[0]
+                s3 = s2[1].split("[START_VERDICT]")
+                parts["baseline"] = s3[0]
+                parts["verdict"] = s3[1]
+            except: parts["p_a"] = raw 
             
-            st.rerun()
+            # SAVE TO HISTORY THEN RERUN
             current_session["messages"].append(parts)
+            current_session["title"] = f"💬 {user_query[:20]}..."
+            st.rerun()
