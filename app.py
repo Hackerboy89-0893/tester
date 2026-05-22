@@ -109,7 +109,7 @@ if not current_session["messages"]:
 for msg in current_session["messages"]:
     if msg["role"] == "user":
         st.chat_message("user").markdown(msg["content"])
-    elif msg["role"] == "assistant"]:
+    elif msg["role"] == "assistant":
         with st.chat_message("assistant"):
             col1, col2 = st.columns(2)
             with col1:
