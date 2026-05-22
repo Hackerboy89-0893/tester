@@ -47,7 +47,6 @@ st.markdown("""
 
 # 3. Initialize Global Application Session States
 if "chat_sessions" not in st.session_state:
-    # Structure: { session_id: { "title": "New Chat", "messages": [] } }
     first_id = str(uuid.uuid4())
     st.session_state.chat_sessions = {
         first_id: {"title": "⚖️ First Neutral Analysis", "messages": []}
@@ -80,11 +79,9 @@ with st.sidebar:
     
     # Loop through and generate dynamic navigation tabs
     for session_id, session_data in list(st.session_state.chat_sessions.items()):
-        # Highlight current active session visually using button types
         is_active = (session_id == st.session_state.active_session_id)
         btn_type = "secondary" if not is_active else "primary"
         
-        # Truncate title strings neatly so they fit in sidebar menu options
         display_title = session_data["title"]
         if len(display_title) > 28:
             display_title = display_title[:25] + "..."
@@ -109,7 +106,7 @@ if not current_session["messages"]:
 for msg in current_session["messages"]:
     if msg["role"] == "user":
         st.chat_message("user").markdown(msg["content"])
-    elif msg["role"] == "assistant":  # FIXED: Syntax bracket removed
+    elif msg["role"] == "assistant":
         with st.chat_message("assistant"):
             col1, col2 = st.columns(2)
             with col1:
@@ -160,20 +157,33 @@ if user_query := st.chat_input("Query the neutral matrix..."):
                 )
                 
                 raw_text = completion.choices[0].message.content
-                p_a, p_b, baseline = "Processing failure.", "Processing failure.", "Processing failure."
                 
-                # Split algorithm mechanics parsing data cleanly outside risky JSON schemas
-                if "[START_PERSPECTIVE_A]" in raw_text and "[START_PERSPECTIVE_B]" in raw_text and "[START_BASELINE]" in raw_text:
-                    try:
-                        part_a_and_more = raw_text.split("[START_PERSPECTIVE_A]")[1]
-                        # FIXED: Added maxsplit=1 parameter to both steps to completely prevent variable value unpacking crashes
-                        p_a, remaining = part_a_and_more.split("[START_PERSPECTIVE_B]", 1)
-                        p_b, baseline = remaining.split("[START_BASELINE]", 1)
-                        p_a, p_b, baseline = p_a.strip(), p_b.strip(), baseline.strip()
-                    except Exception:
-                        p_a, p_b, baseline = raw_text, "Review full transcript below.", ""
+                # NEW ADAPTIVE PARSING ENGINE (Completely immune to missing or dropped tags)
+                p_a = "No data generated for this section."
+                p_b = "No data generated for this section."
+                baseline = "ℹ️ No historical baseline data returned for this query."
+                
+                # Step 1: Extract everything after Perspective A
+                if "[START_PERSPECTIVE_A]" in raw_text:
+                    remainder_a = raw_text.split("[START_PERSPECTIVE_A]", 1)[1]
                 else:
-                    p_a = raw_text
+                    remainder_a = raw_text
+
+                # Step 2: Split apart Perspective A and Perspective B
+                if "[START_PERSPECTIVE_B]" in remainder_a:
+                    p_a, remainder_b = remainder_a.split("[START_PERSPECTIVE_B]", 1)
+                else:
+                    p_a = remainder_a
+                    remainder_b = ""
+
+                # Step 3: Split apart Perspective B and the Baseline Data
+                if "[START_BASELINE]" in remainder_b:
+                    p_b, baseline = remainder_b.split("[START_BASELINE]", 1)
+                else:
+                    p_b = remainder_b
+                
+                # Clean up stray white spaces cleanly
+                p_a, p_b, baseline = p_a.strip(), p_b.strip(), baseline.strip()
                 
                 # Render live visually onto dashboard space grids
                 col1, col2 = st.columns(2)
