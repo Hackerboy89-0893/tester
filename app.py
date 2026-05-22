@@ -9,62 +9,67 @@ st.set_page_config(page_title="NotBias.com", layout="wide")
 # 2. Refined Modern UI Styles
 st.markdown("""
 <style>
-    html, body, [data-testid="stAppViewContainer"] {
-        background-color: #f8fafc;
-        color: #1e293b;
-        font-family: 'Inter', sans-serif;
-    }
+/* Base App */
+html, body, [data-testid="stAppViewContainer"] {
+    background-color: #f9fafb;
+    color: #1f2937;
+    font-family: 'Inter', sans-serif;
+}
 
-    .ui-card {
-        background: #ffffff;
-        padding: 20px;
-        border-radius: 16px;
-        border: 1px solid #e5e7eb;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    }
+/* Chat Cards */
+.ui-card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
 
-    .card-left { border-left: 5px solid #10b981; }
-    .card-right { border-left: 5px solid #3b82f6; }
-    .card-data { border-left: 5px solid #f59e0b; background: #fffbeb; }
-    .card-verdict { border-left: 5px solid #c084fc; background: #faf5ff; }
+/* Perspective Borders */
+.card-left { border-left: 6px solid #10b981; }
+.card-right { border-left: 6px solid #3b82f6; }
+.card-data { border-left: 6px solid #f59e0b; background: #fffbeb; }
+.card-verdict { border-left: 6px solid #c084fc; background: #faf5ff; }
 
-    .header-label {
-        font-size: 10px;
-        font-weight: 800;
-        text-transform: uppercase;
-        color: #94a3b8;
-        margin-bottom: 8px;
-        letter-spacing: 0.05em;
-    }
+/* Labels */
+.header-label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+}
 
-    /* Input box styling like the screenshot */
-    .stTextInput>div>div>input {
-        border-radius: 16px;
-        padding: 12px 16px;
-        border: 1px solid #e5e7eb;
-        font-size: 14px;
-        color: #1e293b;
-    }
+/* Chat Input */
+.stTextInput>div>div>input {
+    border-radius: 16px;
+    padding: 14px 20px;
+    border: 1px solid #e5e7eb;
+    font-size: 15px;
+    color: #1f2937;
+}
 
-    /* Buttons */
-    .stButton>button {
-        border-radius: 16px;
-        padding: 10px 24px;
-        background-color: #7c3aed;
-        color: #fff;
-        font-weight: 600;
-        border: none;
-    }
+/* Buttons */
+.stButton>button {
+    border-radius: 16px;
+    padding: 10px 28px;
+    background-color: #7c3aed;
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+    font-size: 14px;
+}
 
-    .stButton>button:hover {
-        background-color: #6b21a8;
-    }
+.stButton>button:hover {
+    background-color: #6b21a8;
+}
 
-    /* Sidebar */
-    [data-testid="stSidebar"] {
-        background-color: #ffffff;
-    }
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background-color: #ffffff;
+}
 </style>
 """, unsafe_allow_html=True)
 
