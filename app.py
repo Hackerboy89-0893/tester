@@ -5,7 +5,7 @@ import uuid
 # 1. Page Config & Layout Architecture
 st.set_page_config(page_title="NotBias.com Engine", layout="wide", initial_sidebar_state="expanded")
 
-# 2. Native AI Dashboard Dark Theme CSS Inject
+# 2. Premium AI Chatbot Interface Dark Theme
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -45,15 +45,22 @@ st.markdown("""
         border: none !important;
     }
 
-    /* Premium Glassmorphism UI Cards */
+    /* Native Chat Container Width Overrides to look like a desktop app */
+    [data-testid="stChatMessage"] {
+        background-color: transparent !important;
+        border: none !important;
+        padding: 1.5rem 0rem !important;
+    }
+    
+    /* Premium Glassmorphism UI Cards inside the Assistant rows */
     .ui-card {
         background: rgba(25, 30, 48, 0.65);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        padding: 24px;
-        border-radius: 16px;
+        padding: 20px;
+        border-radius: 14px;
         border: 1px solid rgba(255, 255, 255, 0.06);
-        margin-bottom: 20px;
+        margin-top: 10px;
         box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
     }
     
@@ -63,12 +70,12 @@ st.markdown("""
     .card-data { border-left: 4px solid #f59e0b; background: rgba(30, 35, 54, 0.4); } 
     
     .card-header {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.1em;
         color: #94a3b8;
-        margin-bottom: 14px;
+        margin-bottom: 10px;
     }
 
     /* Clean Floating Text Tray Anchor adjustments */
@@ -144,12 +151,13 @@ if not current_session["messages"]:
     st.markdown("<h1 style='text-align: center; font-size: 36px; font-weight: 700; background: linear-gradient(135deg, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>What can I balance for you today?</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #64748b; font-size: 15px;'>Enter any highly controversial topic or debate to extract real-time adversarial framework perspectives.</p>", unsafe_allow_html=True)
 
-# Render existing chat logs from storage for the active session
+# Render existing chat logs natively from history state
 for msg in current_session["messages"]:
     if msg["role"] == "user":
         st.chat_message("user").markdown(msg["content"])
     elif msg["role"] == "assistant":
-        with st.chat_message("assistant"):
+        # CHATBOT DESIGN FIX: Wrapping the split layout completely inside a native assistant container bubble
+        with st.chat_message("assistant", avatar="⚖️"):
             col1, col2 = st.columns(2)
             with col1:
                 st.markdown('<div class="ui-card card-left"><div class="card-header">🟢 Perspective A (Interventionist / Reformist)</div></div>', unsafe_allow_html=True)
@@ -162,8 +170,10 @@ for msg in current_session["messages"]:
 
 # Floating Input Processing Logic Triggers
 if user_query := st.chat_input("Ask notbias.com..."):
+    # Render user query right into the live stream
     st.chat_message("user").markdown(user_query)
     
+    # Auto-rename the chat thread button tab
     if current_session["title"] in ["⚖️ New Analysis", "⚖️ First Neutral Analysis"]:
         current_session["title"] = f"💬 {user_query.strip().capitalize()}"
         
@@ -183,7 +193,7 @@ if user_query := st.chat_input("Ask notbias.com..."):
         "4. Treat Perspective A as the progressive, interventionist, or change-focused side, and Perspective B as the conservative, traditional, or free-market side where applicable."
     )
     
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="⚖️"):
         with st.spinner("Isolating spectrum markers..."):
             try:
                 completion = client.chat.completions.create(
@@ -217,7 +227,7 @@ if user_query := st.chat_input("Ask notbias.com..."):
                 
                 p_a, p_b, baseline = p_a.strip(), p_b.strip(), baseline.strip()
                 
-                # Render live visually onto dashboard space grids
+                # Render live inside the active live streaming thread row
                 col1, col2 = st.columns(2)
                 with col1:
                     st.markdown('<div class="ui-card card-left"><div class="card-header">🟢 Perspective A (Interventionist / Reformist)</div></div>', unsafe_allow_html=True)
@@ -228,7 +238,7 @@ if user_query := st.chat_input("Ask notbias.com..."):
                 st.markdown('<div class="ui-card card-data"><div class="card-header">📊 Objective Metrics & Structural Baselines</div></div>', unsafe_allow_html=True)
                 st.markdown(baseline)
                 
-                # Append structures cleanly into history storage logs
+                # Save structured history
                 current_session["messages"].append({
                     "role": "assistant",
                     "p_a": p_a,
