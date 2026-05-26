@@ -59,7 +59,7 @@ for i, msg in enumerate(st.session_state.messages):
             st.toast("Deepening analysis...")
 # 6. Process Input
 if user_query := st.chat_input("Ask a hard question..."):
-    # Initialize the data object here to guarantee it exists in the outer scope
+    # Initialize data object with default values
     data = {"user_q": user_query, "p_a": "...", "p_b": "...", "verdict": "..."}
     
     if "complexity" not in st.session_state:
@@ -75,21 +75,21 @@ if user_query := st.chat_input("Ask a hard question..."):
             # Dynamic prompt injection
             mod = "Keep this response under 100 words." if st.session_state.complexity == "brief" else "Provide a detailed, technical analysis."
             
-           system_prompt = f"""
-You are the "NotBias Decision Lab". Provide a symmetrical analysis.
-INSTRUCTION: {mod}
+            system_prompt = f"""
+            You are the "NotBias Decision Lab". Provide a symmetrical analysis.
+            INSTRUCTION: {mod}
 
-STRICT FORMATTING RULES:
-You must output exactly these strings as standalone lines, with no other text on those lines:
-[START_PERSPECTIVE_A]
-[START_PERSPECTIVE_B]
-[START_DECISION_FRAMEWORK]
+            STRICT FORMATTING RULES:
+            You must output exactly these strings as standalone lines, with no other text on those lines:
+            [START_PERSPECTIVE_A]
+            [START_PERSPECTIVE_B]
+            [START_DECISION_FRAMEWORK]
 
-- Do not include any headers like "Perspective A" or "Decision Framework" outside of those tags.
-- For [START_DECISION_FRAMEWORK], provide a list where each item starts with a dash '-'.
-- Use two newlines '\n\n' between items in the list to ensure they render correctly.
-- Absolutely NO bolding (**).
-"""
+            - Do not include any headers like "Perspective A" or "Decision Framework" outside of those tags.
+            - For [START_DECISION_FRAMEWORK], provide a list where each item starts with a dash '-'.
+            - Use two newlines '\n\n' between items in the list.
+            - Absolutely NO bolding (**).
+            """
             
             completion = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
@@ -100,23 +100,26 @@ You must output exactly these strings as standalone lines, with no other text on
             )
             raw = completion.choices[0].message.content
             
-            # Update the 'data' object based on API response
+            # Robust defensive parsing
             try:
-                idx_a = raw.find("[START_PERSPECTIVE_A]")
-                idx_b = raw.find("[START_PERSPECTIVE_B]")
-                idx_f = raw.find("[START_DECISION_FRAMEWORK]")
-                
-                if idx_a != -1 and idx_b > idx_a and idx_f > idx_b:
-                    data["p_a"] = raw[idx_a + len("[START_PERSPECTIVE_A]"):idx_b].strip()
-                    data["p_b"] = raw[idx_b + len("[START_PERSPECTIVE_B]"):idx_f].strip()
-                    data["verdict"] = raw[idx_f + len("[START_DECISION_FRAMEWORK]"):].strip()
+                if "[START_PERSPECTIVE_A]" in raw and "[START_PERSPECTIVE_B]" in raw and "[START_DECISION_FRAMEWORK]" in raw:
+                    # Clean out the tags and split the sections
+                    sections = raw.split("[START_PERSPECTIVE_B]")
+                    p_a_raw = sections[0].replace("[START_PERSPECTIVE_A]", "").strip()
+                    
+                    sub_sections = sections[1].split("[START_DECISION_FRAMEWORK]")
+                    p_b_raw = sub_sections[0].strip()
+                    verdict_raw = sub_sections[1].strip()
+                    
+                    data["p_a"] = p_a_raw
+                    data["p_b"] = p_b_raw
+                    data["verdict"] = verdict_raw
                 else:
-                    data["p_a"] = "Formatting error: The engine failed to separate the perspectives."
-                    data["p_b"] = "Please try again."
-                    data["verdict"] = "The response did not meet the required structural standards."
+                    data["p_a"] = "Formatting error: The engine failed to separate the perspectives cleanly."
+                    data["p_b"] = "Please try again or refine the query."
+                    data["verdict"] = "Structure missing."
             except Exception as e:
                 data["p_a"] = f"Technical Error: {str(e)}"
     
-    # Now append is safe because data is guaranteed to exist
     st.session_state.messages.append(data)
     st.rerun()
