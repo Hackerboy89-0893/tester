@@ -46,21 +46,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# --- 5. CHAT DISPLAY ---
-for msg in st.session_state.messages:
-    with st.chat_message("user"):
-        st.markdown(msg["user_q"])
-    with st.chat_message("assistant"):
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown('<div class="label">Perspective A</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="ui-card card-left">{msg["p_a"]}</div>', unsafe_allow_html=True)
-        with col2:
-            st.markdown('<div class="label">Perspective B</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="ui-card card-right">{msg["p_b"]}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="label">Decision Framework</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="ui-card card-verdict">{msg["verdict"]}</div>', unsafe_allow_html=True)
-
 # 6. Process Input
 if user_query := st.chat_input("Ask a hard question..."):
     with st.chat_message("user"):
@@ -110,6 +95,23 @@ if user_query := st.chat_input("Ask a hard question..."):
                     data["verdict"] = "Please refine the query."
             except Exception as e:
                 data["p_a"] = f"Parsing Error: {str(e)}"
+
+# --- 5. CHAT DISPLAY ---
+for msg in st.session_state.messages:
+    with st.chat_message("user"):
+        st.markdown(msg["user_q"])
+    with st.chat_message("assistant"):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown('<div class="label">Perspective A</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="ui-card card-left">{msg["p_a"]}</div>', unsafe_allow_html=True)
+        with col2:
+            st.markdown('<div class="label">Perspective B</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="ui-card card-right">{msg["p_b"]}</div>', unsafe_allow_html=True)
+        st.markdown('<div class="label">Decision Framework</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="ui-card card-verdict">{msg["verdict"]}</div>', unsafe_allow_html=True)
+
+
             
             st.session_state.messages.append(data)
             st.rerun()
