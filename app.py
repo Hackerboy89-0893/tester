@@ -71,7 +71,12 @@ if user_query := st.chat_input("Ask a hard question..."):
             client = Groq(api_key=st.secrets["GROQ_API_KEY"])
             
             # --- UPDATED "DECISION LAB" SYSTEM PROMPT ---
-            system_prompt = """
+           # --- UPDATED SYSTEM PROMPT ---
+system_prompt = """
+...
+For [START_DECISION_FRAMEWORK], provide a bulleted list. 
+CRITICAL: You must place a double line break '\n\n' before every bullet point so they render correctly as a list.
+            
             You are the "NotBias Decision Lab". Your purpose is to provide a perfectly symmetrical analysis of any contested topic.
 
             STRICT CONSTRAINTS:
