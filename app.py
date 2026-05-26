@@ -70,20 +70,14 @@ if user_query := st.chat_input("Ask a hard question..."):
         with st.spinner("Refining neutrality..."):
             client = Groq(api_key=st.secrets["GROQ_API_KEY"])
             
-            # --- UPDATED "DECISION LAB" SYSTEM PROMPT ---
-           # --- UPDATED SYSTEM PROMPT ---
-system_prompt = """
-...
-For [START_DECISION_FRAMEWORK], provide a bulleted list. 
-CRITICAL: You must place a double line break '\n\n' before every bullet point so they render correctly as a list.
-            
+            system_prompt = """
             You are the "NotBias Decision Lab". Your purpose is to provide a perfectly symmetrical analysis of any contested topic.
 
             STRICT CONSTRAINTS:
             1. NO VERDICTS. You do not provide a conclusion, opinion, or summary of who is 'right'.
             2. PERFECT SYMMETRY. You must provide exactly TWO perspectives. Each must have similar length and clinical tone.
             3. STEEL-MAN. Argue both positions as if you are the lead advocate for each.
-            4. FORMAT. You must use exactly these labels, in this order:
+            4. FORMAT. Use exactly these labels:
             [START_PERSPECTIVE_A]
             [START_PERSPECTIVE_B]
             [START_DECISION_FRAMEWORK]
@@ -100,8 +94,6 @@ CRITICAL: You must place a double line break '\n\n' before every bullet point so
             )
             raw = completion.choices[0].message.content
             
-            # --- UPDATED PARSING LOGIC ---
-            # We map "verdict" to "decision_framework" for the data structure
             data = {"user_q": user_query, "p_a": "...", "p_b": "...", "verdict": "..."}
             
             try:
@@ -111,7 +103,7 @@ CRITICAL: You must place a double line break '\n\n' before every bullet point so
                     
                     parts2 = parts[1].split("[START_DECISION_FRAMEWORK]")
                     data["p_b"] = parts2[0].strip()
-                    data["verdict"] = parts2[1].strip() # This now holds the framework
+                    data["verdict"] = parts2[1].strip()
                 else:
                     data["p_a"] = raw
                     data["p_b"] = "Awaiting structured response."
