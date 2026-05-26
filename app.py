@@ -59,6 +59,10 @@ for i, msg in enumerate(st.session_state.messages):
             st.toast("Deepening analysis...")
 # 6. Process Input
 if user_query := st.chat_input("Ask a hard question..."):
+    # Initialize complexity if it doesn't exist
+    if "complexity" not in st.session_state:
+        st.session_state.complexity = "standard"
+        
     with st.chat_message("user"):
         st.markdown(user_query)
     
@@ -66,8 +70,12 @@ if user_query := st.chat_input("Ask a hard question..."):
         with st.spinner("Refining neutrality..."):
             client = Groq(api_key=st.secrets["GROQ_API_KEY"])
             
-            system_prompt = """
+            # Dynamic prompt injection
+            mod = "Keep this response under 100 words." if st.session_state.complexity == "brief" else "Provide a detailed, technical analysis."
+            
+            system_prompt = f"""
             You are the "NotBias Decision Lab". Provide a symmetrical analysis.
+            INSTRUCTION: {mod}
 
             STRICT FORMATTING RULES:
             - You MUST use these exact headers, with nothing else on that line:
@@ -79,6 +87,7 @@ if user_query := st.chat_input("Ask a hard question..."):
             - Include two newlines '\n\n' between list items.
             - Do not use markdown bolding (**) anywhere.
             """
+            
             completion = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=[
@@ -88,23 +97,7 @@ if user_query := st.chat_input("Ask a hard question..."):
             )
             raw = completion.choices[0].message.content
             
-            data = {"user_q": user_query, "p_a": "...", "p_b": "...", "verdict": "..."}
+            # ... (keep your existing try/except parsing logic here) ...
             
-            try:
-                idx_a = raw.find("[START_PERSPECTIVE_A]")
-                idx_b = raw.find("[START_PERSPECTIVE_B]")
-                idx_f = raw.find("[START_DECISION_FRAMEWORK]")
-                
-                if idx_a != -1 and idx_b > idx_a and idx_f > idx_b:
-                    data["p_a"] = raw[idx_a + len("[START_PERSPECTIVE_A]"):idx_b].strip()
-                    data["p_b"] = raw[idx_b + len("[START_PERSPECTIVE_B]"):idx_f].strip()
-                    data["verdict"] = raw[idx_f + len("[START_DECISION_FRAMEWORK]"):].strip()
-                else:
-                    data["p_a"] = "Formatting error: The engine failed to separate the perspectives."
-                    data["p_b"] = "Please try again."
-                    data["verdict"] = "The response did not meet the required structural standards."
-            except Exception as e:
-                data["p_a"] = f"Technical Error: {str(e)}"
-    
     st.session_state.messages.append(data)
     st.rerun()
