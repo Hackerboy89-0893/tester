@@ -75,20 +75,21 @@ if user_query := st.chat_input("Ask a hard question..."):
             # Dynamic prompt injection
             mod = "Keep this response under 100 words." if st.session_state.complexity == "brief" else "Provide a detailed, technical analysis."
             
-            system_prompt = f"""
-            You are the "NotBias Decision Lab". Provide a symmetrical analysis.
-            INSTRUCTION: {mod}
+           system_prompt = f"""
+You are the "NotBias Decision Lab". Provide a symmetrical analysis.
+INSTRUCTION: {mod}
 
-            STRICT FORMATTING RULES:
-            - You MUST use these exact headers, with nothing else on that line:
-            [START_PERSPECTIVE_A]
-            [START_PERSPECTIVE_B]
-            [START_DECISION_FRAMEWORK]
-            - NO headers like "Final Verdict" or "Perspective A".
-            - For [START_DECISION_FRAMEWORK], provide a list where each item starts with a dash '-'.
-            - Include two newlines '\n\n' between list items.
-            - Do not use markdown bolding (**) anywhere.
-            """
+STRICT FORMATTING RULES:
+You must output exactly these strings as standalone lines, with no other text on those lines:
+[START_PERSPECTIVE_A]
+[START_PERSPECTIVE_B]
+[START_DECISION_FRAMEWORK]
+
+- Do not include any headers like "Perspective A" or "Decision Framework" outside of those tags.
+- For [START_DECISION_FRAMEWORK], provide a list where each item starts with a dash '-'.
+- Use two newlines '\n\n' between items in the list to ensure they render correctly.
+- Absolutely NO bolding (**).
+"""
             
             completion = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
