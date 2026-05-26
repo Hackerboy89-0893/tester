@@ -59,7 +59,9 @@ for i, msg in enumerate(st.session_state.messages):
             st.toast("Deepening analysis...")
 # 6. Process Input
 if user_query := st.chat_input("Ask a hard question..."):
-    # Initialize complexity if it doesn't exist
+    # Initialize the data object here to guarantee it exists in the outer scope
+    data = {"user_q": user_query, "p_a": "...", "p_b": "...", "verdict": "..."}
+    
     if "complexity" not in st.session_state:
         st.session_state.complexity = "standard"
         
@@ -97,7 +99,23 @@ if user_query := st.chat_input("Ask a hard question..."):
             )
             raw = completion.choices[0].message.content
             
-            # ... (keep your existing try/except parsing logic here) ...
-            
+            # Update the 'data' object based on API response
+            try:
+                idx_a = raw.find("[START_PERSPECTIVE_A]")
+                idx_b = raw.find("[START_PERSPECTIVE_B]")
+                idx_f = raw.find("[START_DECISION_FRAMEWORK]")
+                
+                if idx_a != -1 and idx_b > idx_a and idx_f > idx_b:
+                    data["p_a"] = raw[idx_a + len("[START_PERSPECTIVE_A]"):idx_b].strip()
+                    data["p_b"] = raw[idx_b + len("[START_PERSPECTIVE_B]"):idx_f].strip()
+                    data["verdict"] = raw[idx_f + len("[START_DECISION_FRAMEWORK]"):].strip()
+                else:
+                    data["p_a"] = "Formatting error: The engine failed to separate the perspectives."
+                    data["p_b"] = "Please try again."
+                    data["verdict"] = "The response did not meet the required structural standards."
+            except Exception as e:
+                data["p_a"] = f"Technical Error: {str(e)}"
+    
+    # Now append is safe because data is guaranteed to exist
     st.session_state.messages.append(data)
     st.rerun()
