@@ -69,22 +69,36 @@ if user_query := st.chat_input("Ask a hard question..."):
     with st.chat_message("assistant"):
         with st.spinner("Refining neutrality..."):
             client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+            
+            # --- UPDATED SYSTEM PROMPT ---
+            system_prompt = """
+            You are the "NotBias Neutrality Engine". Your sole purpose is to deconstruct contested questions into two opposing, high-quality, 'steel-man' arguments.
+
+            STRICT CONSTRAINTS:
+            1. NO conversational filler. Do not say "Certainly", "Here are the sides", or "It is important to note".
+            2. ABSOLUTE NEUTRALITY. You do not hold an opinion. You do not conclude which side is 'right'.
+            3. STEEL-MAN. For both sides, provide the strongest, most intellectually honest argument used by experts in that field.
+            4. FORMAT. You must use exactly these labels, in this order:
+            [START_PERSPECTIVE_A]
+            [START_PERSPECTIVE_B]
+            [START_VERDICT]
+
+            For [START_VERDICT], strictly summarize the core conflict in value systems that prevents a singular consensus. Do not take a side.
+            """
+
             completion = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=[
-                    {"role": "system", "content": "You are a neutral analyst. Provide your response using EXACTLY these headers: [START_PERSPECTIVE_A], [START_PERSPECTIVE_B], [START_VERDICT]. Do not include conversational filler before the first tag."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_query}
                 ]
             )
             raw = completion.choices[0].message.content
             
-            # ROBUST PARSING LOGIC
-            # We look for the tags, but if they aren't found, we just show the raw text
-            # instead of crashing the app.
+            # --- PARSING LOGIC (Remains the same) ---
             data = {"user_q": user_query, "p_a": "...", "p_b": "...", "verdict": "..."}
             
             try:
-                # Use split with a fallback
                 if "[START_PERSPECTIVE_A]" in raw and "[START_PERSPECTIVE_B]" in raw and "[START_VERDICT]" in raw:
                     parts = raw.split("[START_PERSPECTIVE_A]")[1].split("[START_PERSPECTIVE_B]")
                     data["p_a"] = parts[0].strip()
@@ -93,7 +107,6 @@ if user_query := st.chat_input("Ask a hard question..."):
                     data["p_b"] = parts2[0].strip()
                     data["verdict"] = parts2[1].strip()
                 else:
-                    # If tags are missing, just display the raw text in the first section
                     data["p_a"] = raw
                     data["p_b"] = "No secondary perspective found."
                     data["verdict"] = "Please refine the query."
