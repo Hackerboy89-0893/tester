@@ -1,6 +1,5 @@
 import streamlit as st
 from groq import Groq
-import uuid
 
 # --- 1. CONFIGURATION ---
 st.set_page_config(page_title="NotBias.com", layout="wide")
@@ -10,17 +9,11 @@ st.markdown("""
 <style>
     :root { --accent: #7c3aed; }
     .stApp { background-color: #f8fafc; }
-    
-    /* Hero Section */
     .hero { max-width: 800px; margin: 40px auto 40px auto; text-align: center; }
     .hero h1 { font-size: 56px; font-weight: 800; color: #111827; line-height: 1.1; margin-bottom: 20px; }
     .hero h1 span { color: #7c3aed; }
     .hero p { font-size: 18px; color: #6b7280; line-height: 1.6; }
-    
-    /* Stats */
     .stats { display: flex; justify-content: center; gap: 40px; margin-bottom: 40px; font-family: monospace; font-size: 11px; color: #94a3b8; letter-spacing: 0.1em; }
-    
-    /* Cards */
     .ui-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
     .card-left { border-left: 5px solid #10b981; }
     .card-right { border-left: 5px solid #3b82f6; }
@@ -33,18 +26,28 @@ st.markdown("""
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- 4. HEADER / HERO ---
+# --- 4. HEADER ---
 st.markdown("""
 <div class="hero">
     <h1>The AI that gives you <span>every side</span> of the story.</h1>
     <p>Ask any contested question. Get the strongest case for every credible position — sourced, reasoned, and completely agenda-free.</p>
 </div>
-<div class="stats">
-    <span>0 OPINIONS HELD</span>
-    <span>2+ SIDES PER ANSWER</span>
-    <span>100% SOURCE-CITED</span>
-</div>
 """, unsafe_allow_html=True)
+
+# --- 5. CHAT DISPLAY ---
+for msg in st.session_state.messages:
+    with st.chat_message("user"):
+        st.markdown(msg["user_q"])
+    with st.chat_message("assistant"):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown('<div class="label">Perspective A</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="ui-card card-left">{msg["p_a"]}</div>', unsafe_allow_html=True)
+        with col2:
+            st.markdown('<div class="label">Perspective B</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="ui-card card-right">{msg["p_b"]}</div>', unsafe_allow_html=True)
+        st.markdown('<div class="label">Decision Framework</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="ui-card card-verdict">{msg["verdict"]}</div>', unsafe_allow_html=True)
 
 # 6. Process Input
 if user_query := st.chat_input("Ask a hard question..."):
@@ -82,36 +85,20 @@ if user_query := st.chat_input("Ask a hard question..."):
             data = {"user_q": user_query, "p_a": "...", "p_b": "...", "verdict": "..."}
             
             try:
-                if "[START_PERSPECTIVE_A]" in raw and "[START_PERSPECTIVE_B]" in raw and "[START_DECISION_FRAMEWORK]" in raw:
-                    parts = raw.split("[START_PERSPECTIVE_A]")[1].split("[START_PERSPECTIVE_B]")
-                    data["p_a"] = parts[0].strip()
-                    
-                    parts2 = parts[1].split("[START_DECISION_FRAMEWORK]")
-                    data["p_b"] = parts2[0].strip()
-                    data["verdict"] = parts2[1].strip()
+                idx_a = raw.find("[START_PERSPECTIVE_A]")
+                idx_b = raw.find("[START_PERSPECTIVE_B]")
+                idx_f = raw.find("[START_DECISION_FRAMEWORK]")
+                
+                if idx_a != -1 and idx_b > idx_a and idx_f > idx_b:
+                    data["p_a"] = raw[idx_a + len("[START_PERSPECTIVE_A]"):idx_b].strip()
+                    data["p_b"] = raw[idx_b + len("[START_PERSPECTIVE_B]"):idx_f].strip()
+                    data["verdict"] = raw[idx_f + len("[START_DECISION_FRAMEWORK]"):].strip()
                 else:
-                    data["p_a"] = raw
-                    data["p_b"] = "Awaiting structured response."
-                    data["verdict"] = "Please refine the query."
+                    data["p_a"] = "Formatting error: The engine failed to separate the perspectives."
+                    data["p_b"] = "Please try again."
+                    data["verdict"] = "The response did not meet the required structural standards."
             except Exception as e:
-                data["p_a"] = f"Parsing Error: {str(e)}"
-
-# --- 5. CHAT DISPLAY ---
-for msg in st.session_state.messages:
-    with st.chat_message("user"):
-        st.markdown(msg["user_q"])
-    with st.chat_message("assistant"):
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown('<div class="label">Perspective A</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="ui-card card-left">{msg["p_a"]}</div>', unsafe_allow_html=True)
-        with col2:
-            st.markdown('<div class="label">Perspective B</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="ui-card card-right">{msg["p_b"]}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="label">Decision Framework</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="ui-card card-verdict">{msg["verdict"]}</div>', unsafe_allow_html=True)
-
-
-            
-            st.session_state.messages.append(data)
-            st.rerun()
+                data["p_a"] = f"Technical Error: {str(e)}"
+    
+    st.session_state.messages.append(data)
+    st.rerun()
