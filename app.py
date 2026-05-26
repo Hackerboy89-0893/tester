@@ -34,8 +34,8 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# --- 5. CHAT DISPLAY ---
-for msg in st.session_state.messages:
+# --- 5. CHAT DISPLAY & DYNAMIC CONTROLS ---
+for i, msg in enumerate(st.session_state.messages):
     with st.chat_message("user"):
         st.markdown(msg["user_q"])
     with st.chat_message("assistant"):
@@ -47,10 +47,16 @@ for msg in st.session_state.messages:
             st.markdown('<div class="label">Perspective B</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="ui-card card-right">{msg["p_b"]}</div>', unsafe_allow_html=True)
         
-        # This label now correctly matches your "Decision Framework" structure
         st.markdown('<div class="label">Decision Framework</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="ui-card card-verdict">{msg["verdict"]}</div>', unsafe_allow_html=True)
 
+        # Dynamic Controls
+        b1, b2 = st.columns(2)
+        if b1.button("Brief Summary", key=f"brief_{i}"):
+            # Here you would trigger a rerun with a shorter prompt
+            st.toast("Refining to brief...")
+        if b2.button("Complex Analysis", key=f"complex_{i}"):
+            st.toast("Deepening analysis...")
 # 6. Process Input
 if user_query := st.chat_input("Ask a hard question..."):
     with st.chat_message("user"):
