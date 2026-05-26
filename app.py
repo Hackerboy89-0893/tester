@@ -58,7 +58,7 @@ for msg in st.session_state.messages:
         with col2:
             st.markdown('<div class="label">Perspective B</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="ui-card card-right">{msg["p_b"]}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="label">Final Verdict</div>', unsafe_allow_html=True)
+        st.markdown('<div class="label">Decision Framework</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="ui-card card-verdict">{msg["verdict"]}</div>', unsafe_allow_html=True)
 
 # 6. Process Input
