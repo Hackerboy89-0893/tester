@@ -70,20 +70,20 @@ if user_query := st.chat_input("Ask a hard question..."):
         with st.spinner("Refining neutrality..."):
             client = Groq(api_key=st.secrets["GROQ_API_KEY"])
             
-            # --- UPDATED SYSTEM PROMPT ---
+            # --- UPDATED "DECISION LAB" SYSTEM PROMPT ---
             system_prompt = """
-            You are the "NotBias Neutrality Engine". Your sole purpose is to deconstruct contested questions into two opposing, high-quality, 'steel-man' arguments.
+            You are the "NotBias Decision Lab". Your purpose is to provide a perfectly symmetrical analysis of any contested topic.
 
             STRICT CONSTRAINTS:
-            1. NO conversational filler. Do not say "Certainly", "Here are the sides", or "It is important to note".
-            2. ABSOLUTE NEUTRALITY. You do not hold an opinion. You do not conclude which side is 'right'.
-            3. STEEL-MAN. For both sides, provide the strongest, most intellectually honest argument used by experts in that field.
+            1. NO VERDICTS. You do not provide a conclusion, opinion, or summary of who is 'right'.
+            2. PERFECT SYMMETRY. You must provide exactly TWO perspectives. Each must have similar length and clinical tone.
+            3. STEEL-MAN. Argue both positions as if you are the lead advocate for each.
             4. FORMAT. You must use exactly these labels, in this order:
             [START_PERSPECTIVE_A]
             [START_PERSPECTIVE_B]
-            [START_VERDICT]
+            [START_DECISION_FRAMEWORK]
 
-            For [START_VERDICT], strictly summarize the core conflict in value systems that prevents a singular consensus. Do not take a side.
+            For [START_DECISION_FRAMEWORK], provide a bulleted list of the specific values, metrics, and criteria a user should weigh to decide between these two perspectives themselves.
             """
 
             completion = client.chat.completions.create(
@@ -95,23 +95,24 @@ if user_query := st.chat_input("Ask a hard question..."):
             )
             raw = completion.choices[0].message.content
             
-            # --- PARSING LOGIC (Remains the same) ---
+            # --- UPDATED PARSING LOGIC ---
+            # We map "verdict" to "decision_framework" for the data structure
             data = {"user_q": user_query, "p_a": "...", "p_b": "...", "verdict": "..."}
             
             try:
-                if "[START_PERSPECTIVE_A]" in raw and "[START_PERSPECTIVE_B]" in raw and "[START_VERDICT]" in raw:
+                if "[START_PERSPECTIVE_A]" in raw and "[START_PERSPECTIVE_B]" in raw and "[START_DECISION_FRAMEWORK]" in raw:
                     parts = raw.split("[START_PERSPECTIVE_A]")[1].split("[START_PERSPECTIVE_B]")
                     data["p_a"] = parts[0].strip()
                     
-                    parts2 = parts[1].split("[START_VERDICT]")
+                    parts2 = parts[1].split("[START_DECISION_FRAMEWORK]")
                     data["p_b"] = parts2[0].strip()
-                    data["verdict"] = parts2[1].strip()
+                    data["verdict"] = parts2[1].strip() # This now holds the framework
                 else:
                     data["p_a"] = raw
-                    data["p_b"] = "No secondary perspective found."
+                    data["p_b"] = "Awaiting structured response."
                     data["verdict"] = "Please refine the query."
             except Exception as e:
-                data["p_a"] = f"Parsing Error: {str(e)} \n\n Raw Output: {raw}"
+                data["p_a"] = f"Parsing Error: {str(e)}"
             
             st.session_state.messages.append(data)
             st.rerun()
